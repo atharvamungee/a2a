@@ -23,6 +23,7 @@ from a2a.utils import get_message_text, new_agent_text_message
 
 TIME_AGENT_URL = "http://localhost:8001"
 LOCATION_AGENT_URL = "http://localhost:8002"
+INFO_AGENT_URL = "http://localhost:8003"
 
 
 class OrchestratorAgentExecutor(AgentExecutor):
@@ -42,6 +43,19 @@ class OrchestratorAgentExecutor(AgentExecutor):
                 params=MessageSendParams(message=context.message),
             )
             resp = await time_client.send_message(request)
+            result = resp.root.result
+            if hasattr(result, "parts"):
+                responses.append(get_message_text(result))
+
+        if "info" in query:
+            info_client = await A2AClient.get_client_from_agent_card_url(
+                self.httpx_client, INFO_AGENT_URL
+            )
+            request = SendMessageRequest(
+                id=str(uuid4()),
+                params=MessageSendParams(message=context.message),
+            )
+            resp = await info_client.send_message(request)
             result = resp.root.result
             if hasattr(result, "parts"):
                 responses.append(get_message_text(result))
@@ -76,7 +90,7 @@ def build_app() -> A2AStarletteApplication:
         name="Orchestrate requests",
         description="Routes user queries to other agents",
         tags=["orchestrator"],
-        examples=["what time is it", "where are you"],
+        examples=["what time is it", "where are you", "info"],
     )
 
     agent_card = AgentCard(

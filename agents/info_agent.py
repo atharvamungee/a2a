@@ -1,6 +1,6 @@
 import uvicorn
 
-from tools import random_nyc_location
+from tools import format_pacific_time, random_nyc_location
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
@@ -11,10 +11,12 @@ from a2a.types import AgentCard, AgentCapabilities, AgentSkill
 from a2a.utils import new_agent_text_message
 
 
-class LocationAgentExecutor(AgentExecutor):
+class InfoAgentExecutor(AgentExecutor):
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
+        time_str = format_pacific_time()
         location = random_nyc_location()
-        event_queue.enqueue_event(new_agent_text_message(f"New York - {location}"))
+        text = f"Pacific time: {time_str}\nLocation: New York - {location}"
+        event_queue.enqueue_event(new_agent_text_message(text))
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         pass
@@ -22,17 +24,17 @@ class LocationAgentExecutor(AgentExecutor):
 
 def build_app() -> A2AStarletteApplication:
     skill = AgentSkill(
-        id='get_location',
-        name='Get location',
-        description='Returns a random NYC location',
-        tags=['location'],
-        examples=['where are you'],
+        id='get_info',
+        name='Get time and location',
+        description='Returns pacific time and a random NYC location',
+        tags=['info'],
+        examples=['info'],
     )
 
     agent_card = AgentCard(
-        name='Location Agent',
-        description='Returns a random NYC location',
-        url='http://localhost:8002/',
+        name='Info Agent',
+        description='Returns time and location info',
+        url='http://localhost:8003/',
         version='1.0',
         defaultInputModes=['text'],
         defaultOutputModes=['text'],
@@ -41,7 +43,7 @@ def build_app() -> A2AStarletteApplication:
     )
 
     request_handler = DefaultRequestHandler(
-        agent_executor=LocationAgentExecutor(),
+        agent_executor=InfoAgentExecutor(),
         task_store=InMemoryTaskStore(),
     )
 
@@ -53,4 +55,4 @@ def build_app() -> A2AStarletteApplication:
 
 if __name__ == '__main__':
     server = build_app()
-    uvicorn.run(server.build(), host='0.0.0.0', port=8002)
+    uvicorn.run(server.build(), host='0.0.0.0', port=8003)

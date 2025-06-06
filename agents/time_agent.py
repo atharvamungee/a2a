@@ -1,5 +1,6 @@
 import uvicorn
-from datetime import datetime
+
+from tools import format_pacific_time
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
@@ -12,7 +13,7 @@ from a2a.utils import new_agent_text_message
 
 class TimeAgentExecutor(AgentExecutor):
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
-        current_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        current_time = format_pacific_time()
         event_queue.enqueue_event(new_agent_text_message(current_time))
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
@@ -23,14 +24,14 @@ def build_app() -> A2AStarletteApplication:
     skill = AgentSkill(
         id='get_time',
         name='Get current time',
-        description='Returns the current UTC time',
+        description='Returns the current Pacific Time',
         tags=['time'],
         examples=['what time is it'],
     )
 
     agent_card = AgentCard(
         name='Time Agent',
-        description='Returns the current time',
+        description='Returns the current Pacific time',
         url='http://localhost:8001/',
         version='1.0',
         defaultInputModes=['text'],
